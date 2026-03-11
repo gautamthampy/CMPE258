@@ -63,12 +63,29 @@ class NoisyWrapper(Dataset):
         return noisy, clean
 
 
+class _StructuredFakeData(Dataset):
+    """Synthetic colour images with smooth spatial structure (offline fallback)."""
+
+    def __init__(self, size: int = 8000) -> None:
+        self.size = size
+
+    def __len__(self) -> int:
+        return self.size
+
+    def __getitem__(self, index: int):
+        rng = np.random.RandomState(index)
+        # Low-res random grid upsampled to 32×32 gives smooth natural-ish images
+        low = torch.from_numpy(rng.rand(3, 4, 4).astype(np.float32)).unsqueeze(0)
+        img = torch.nn.functional.interpolate(low, size=(32, 32), mode="bilinear", align_corners=False).squeeze(0)
+        return img, 0  # label unused by NoisyWrapper
+
+
 def _load_cifar10(data_dir: Path) -> Dataset:
     transform = transforms.ToTensor()
     try:
         return datasets.CIFAR10(root=str(data_dir), train=True, download=True, transform=transform)
     except Exception:
-        return datasets.FakeData(size=8000, image_size=(3, 32, 32), num_classes=10, transform=transform)
+        return _StructuredFakeData(size=8000)
 
 
 def make_dataloaders(
