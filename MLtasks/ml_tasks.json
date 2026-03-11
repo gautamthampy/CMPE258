@@ -1,0 +1,89 @@
+{
+  "version": "1.1.0",
+  "prompt_language": "en",
+  "interface_protocols": {
+    "pytorch_task_v1": {
+      "entrypoint": "python tasks/<task_id>/task.py",
+      "prompt_instructions": "Implement this ML task as a SINGLE self-contained Python file (task.py). Include all required functions AND a complete `if __name__ == '__main__':` block that trains the model, evaluates on a validation split, prints standard metrics (MSE, R2, parameter accuracy where applicable), and asserts quality thresholds so the script exits non-zero on failure. Do NOT create separate test files or README. The script itself is the test.",
+      "must_have_files": [
+        "tasks/<task_id>/task.py"
+      ],
+      "required_functions": [
+        "get_task_metadata",
+        "set_seed",
+        "get_device",
+        "make_dataloaders",
+        "build_model",
+        "train",
+        "evaluate",
+        "predict",
+        "save_artifacts"
+      ],
+      "evaluation_rules": [
+        "The `evaluate()` function MUST compute and return standard metrics: MSE, R2 score, and any task-specific metrics on the VALIDATION data split.",
+        "The `if __name__ == '__main__':` block MUST: (1) train the model, (2) evaluate on BOTH train and validation splits, (3) print all metrics clearly, (4) assert quality thresholds (e.g., R2 > 0.9, MSE < threshold), (5) exit 0 on success or non-zero on failure.",
+        "Do NOT use a separate test file. All evaluation logic goes in main()."
+      ],
+      "required_cfg_keys": [],
+      "standard_outputs_schema": {},
+      "docstring_rules": []
+    }
+  },
+  "tasks": [
+    {
+      "series": "Convolutional Neural Networks",
+      "level": 2,
+      "id": "cnn_lvl2b_fashionmnist_adamw",
+      "algorithm": "LeNet on FashionMNIST (AdamW + Cosine Annealing)",
+      "description": "Train a LeNet-style CNN on FashionMNIST with AdamW optimization, cosine annealing, and protocol-compliant self-verification.",
+      "interface_protocol": "pytorch_task_v1",
+      "requirements": {
+        "data": "Use torchvision FashionMNIST with an offline-safe FakeData fallback. Split into train/validation subsets.",
+        "implementation": "PyTorch CNN with BatchNorm, AdamW optimizer, and CosineAnnealingLR scheduler.",
+        "visualization": "Save confusion matrix and training curve artifacts.",
+        "validation": "Validation accuracy must exceed a documented threshold and evaluate() must return MSE, R2, and accuracy-related metrics."
+      }
+    },
+    {
+      "series": "Autoencoders",
+      "level": 2,
+      "id": "ae_lvl2b_conv_cifar_denoise",
+      "algorithm": "Convolutional Denoising Autoencoder on CIFAR-10",
+      "description": "Denoise CIFAR-10 images with a convolutional autoencoder and verify reconstruction quality with MSE, R2, and PSNR.",
+      "interface_protocol": "pytorch_task_v1",
+      "requirements": {
+        "data": "Use torchvision CIFAR-10 with Gaussian corruption and an offline-safe FakeData fallback.",
+        "implementation": "Convolutional encoder-decoder built entirely in PyTorch.",
+        "artifacts": "Save reconstruction grids and metrics JSON.",
+        "validation": "Validation MSE must beat the noisy-input baseline and PSNR must improve by a clear margin."
+      }
+    },
+    {
+      "series": "Sequence Models (RNN/LSTM)",
+      "level": 2,
+      "id": "rnn_lvl2b_gru_imdb_sentiment",
+      "algorithm": "GRU Sentiment Classification",
+      "description": "Train a GRU-based sentiment classifier on a synthetic IMDB-like corpus with gradient clipping and protocol-compliant evaluation.",
+      "interface_protocol": "pytorch_task_v1",
+      "requirements": {
+        "data": "Use a self-contained synthetic sentiment corpus with padding and masking-aware batching.",
+        "implementation": "Embedding + GRU classifier with Adam optimization and gradient clipping.",
+        "validation": "Report MSE, R2, accuracy, precision, recall, and F1. Validation accuracy must exceed a documented threshold."
+      }
+    },
+    {
+      "series": "Neural Networks (MLP)",
+      "level": 2,
+      "id": "mlp_lvl2b_mnist_mixup_labelsmooth",
+      "algorithm": "MLP on MNIST (Mixup + Label Smoothing + Warmup)",
+      "description": "Train an MLP classifier on MNIST using mixup augmentation, label smoothing, and learning-rate warmup.",
+      "interface_protocol": "pytorch_task_v1",
+      "requirements": {
+        "data": "Use torchvision MNIST with an offline-safe FakeData fallback.",
+        "implementation": "PyTorch MLP with mixup, CrossEntropyLoss(label_smoothing=0.1), and warmup scheduling.",
+        "visualization": "Save training curves and final metrics.",
+        "validation": "evaluate() must return MSE, R2, and classification metrics; validation accuracy must exceed a documented threshold."
+      }
+    }
+  ]
+}
